@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="my">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>7scrownSlots · RTP</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{--bg:#030609;--line:rgba(102,255,206,.16);--green:#62ffb5;--cyan:#37e8ff;--red:#ff5470;--muted:#7e999d;--text:#e7fff5;--gold:#e9bd68;--mono:Consolas,"SF Mono",monospace;--card:linear-gradient(145deg,rgba(8,25,24,.9),rgba(10,10,19,.86))}
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:radial-gradient(circle at 12% 8%,rgba(0,220,140,.12),transparent 27%),radial-gradient(circle at 90% 88%,rgba(255,48,91,.11),transparent 31%),linear-gradient(135deg,#030609,#071116 52%,#05070d);color:var(--text);min-height:100vh;display:flex;justify-content:center;padding:12px}
+.phone{max-width:460px;width:100%;background:linear-gradient(145deg,rgba(11,29,29,.94),rgba(5,10,16,.97) 48%,rgba(24,7,18,.92));border-radius:30px;padding:16px 14px 22px;box-shadow:0 30px 90px rgba(0,0,0,.8),0 0 0 1px rgba(98,255,181,.18);overflow:hidden;align-self:flex-start;min-height:min(100vh - 24px,920px)}
+.page{display:none;flex-direction:column;gap:12px;animation:fade .35s ease}.page.active{display:flex}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.hud{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(2,9,11,.75);color:var(--muted);font:9px/1 var(--mono);letter-spacing:1.2px;text-transform:uppercase}
+.hud .live{color:var(--green)}.hud .live::before{content:'';display:inline-block;width:6px;height:6px;margin-right:6px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
+.label{color:var(--green);font:9px/1 var(--mono);letter-spacing:1.5px;text-transform:uppercase}.label::before{content:'// ';color:var(--red)}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.toolbar-right{display:flex;gap:6px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:11px;padding:10px 14px;cursor:pointer;font:700 11px var(--mono);letter-spacing:.5px;border:1px solid transparent;transition:transform .12s,opacity .12s;white-space:nowrap}
+.btn:active{transform:scale(.97)}.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn-play{border-color:rgba(255,84,112,.5);color:#fff;background:linear-gradient(135deg,#eb466f,#c52d5c)}
+.btn-admin{border-color:rgba(233,189,104,.4);color:var(--gold);background:rgba(233,189,104,.1)}
+.btn-ghost{border-color:rgba(55,232,255,.3);color:var(--cyan);background:rgba(55,232,255,.06)}
+.btn-primary{border-color:rgba(98,255,181,.45);color:#03140f;background:linear-gradient(135deg,var(--green),var(--cyan));font-weight:800}
+.btn-soft{border-color:rgba(98,255,181,.28);color:var(--green);background:rgba(98,255,181,.08)}
+.btn-danger{border-color:rgba(255,84,112,.4);color:#ff8a9c;background:rgba(255,84,112,.08)}
+.btn-sm{padding:7px 10px;font-size:10px;border-radius:8px}
+.ico{display:inline-flex;width:1em;height:1em;vertical-align:-.125em;flex-shrink:0}
+.ico svg{width:100%;height:100%;fill:currentColor;display:block}
+
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.card{background:var(--card);border:1px solid rgba(98,255,181,.12);border-radius:18px;padding:10px}
+.card .title{font:600 12px/1.35 var(--mono);min-height:32px}
+.card .thumb{height:160px;margin:8px 0;border-radius:13px;border:1px solid rgba(98,255,181,.2);background:#02080b;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.card .thumb img{width:100%;height:100%;object-fit:contain}.card .thumb .ph{color:#64748b;font-size:22px}
+.rtp-label{font:8.5px/1.4 var(--mono);color:#8aa2a3;text-align:center;margin:2px 0 4px}
+.rtp{display:flex;justify-content:center;align-items:center;padding:6px;border-radius:9px;border:1px solid rgba(98,255,181,.24);background:rgba(0,0,0,.4);font:700 14px var(--mono);color:var(--green);min-height:32px}
+.rtp.manual{border-color:rgba(233,189,104,.4);color:var(--gold)}
+.meter{height:4px;margin-top:7px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}
+.meter span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--green),var(--cyan));transition:width .35s}
+.meter.manual span{background:linear-gradient(90deg,var(--gold),#f0d78c)}
+.demo-warning{text-align:center;white-space:pre-wrap;color:#ffd166;border:1px solid rgba(255,209,102,.25);background:rgba(255,209,102,.06);border-radius:10px;padding:8px 10px;font:9px/1.55 var(--mono)}
+.feed-status{text-align:center;color:#829798;font:9px/1.5 var(--mono)}.foot{text-align:center;color:#7d9294;font:9.5px/1.6 var(--mono);margin-top:4px}
+.play-screen{position:fixed;inset:0;z-index:2000;display:none;flex-direction:column;background:#020608}.play-screen.active{display:flex}
+.play-bar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(7,15,18,.98);border-bottom:1px solid var(--line)}
+.play-screen iframe{flex:1;width:100%;border:0;background:#05080f}
+.admin-shell{display:flex;flex-direction:column;gap:12px;min-height:0}
+.admin-header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.admin-title{font:800 14px/1.2 var(--mono);color:var(--gold);letter-spacing:.8px}
+.dirty-pill{display:none;align-items:center;gap:5px;padding:4px 9px;border-radius:99px;font:700 9px var(--mono);background:rgba(255,209,102,.12);color:#ffd166;border:1px solid rgba(255,209,102,.3)}
+.dirty-pill.show{display:inline-flex}
+.admin-tabs{display:flex;gap:4px;padding:4px;border-radius:12px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.06)}
+.admin-tab{flex:1;padding:9px 6px;border:0;border-radius:9px;background:transparent;color:var(--muted);font:700 9px var(--mono);cursor:pointer}
+.admin-tab.active{background:rgba(98,255,181,.12);color:var(--green)}
+.admin-panel{display:none;flex-direction:column;gap:12px}.admin-panel.active{display:flex}
+.login-card{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:28px 16px;border-radius:20px;border:1px solid rgba(233,189,104,.22);background:radial-gradient(ellipse at 50% 0%,rgba(233,189,104,.1),transparent 55%),rgba(0,0,0,.3)}
+.login-card .icon{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(145deg,rgba(233,189,104,.2),rgba(233,189,104,.05));color:var(--gold);font-size:22px;border:1px solid rgba(233,189,104,.25)}
+.login-card h2{font:800 18px var(--mono);color:#f4e6c4}.login-card p{color:var(--muted);font:12px/1.55 system-ui;max-width:280px}
+.field{display:flex;flex-direction:column;gap:5px;width:100%;text-align:left}
+.field label{font:9px var(--mono);color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.field input,.field select,.field textarea{width:100%;padding:12px 14px;border-radius:11px;border:1px solid rgba(98,255,181,.22);background:rgba(0,0,0,.45);color:var(--text);font:13px var(--mono);outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--green)}
+.field textarea{min-height:72px;resize:vertical;line-height:1.45}
+.field-hint{font:10px/1.4 system-ui;color:#6b8084}.field.invalid input,.field.invalid textarea{border-color:rgba(255,84,112,.55)}
+.list-toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.list-meta{font:10px var(--mono);color:var(--muted);margin-left:auto}
+.search-box{width:100%;padding:10px 12px;border-radius:11px;border:1px solid rgba(98,255,181,.18);background:rgba(0,0,0,.4);color:var(--text);font:12px var(--mono);outline:none}
+.game-list{display:flex;flex-direction:column;gap:10px;max-height:48vh;overflow:auto;padding-right:2px}
+.game-row{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center;padding:10px;border-radius:14px;border:1px solid rgba(98,255,181,.14);background:rgba(0,0,0,.28)}
+.game-row .thumb{width:56px;height:56px;border-radius:12px;border:1px solid rgba(98,255,181,.2);background:#02080b;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.game-row .thumb img{width:100%;height:100%;object-fit:contain}
+.game-row .name{font:700 12px/1.25 var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.game-row .sub{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:5px}
+.badge{display:inline-flex;padding:3px 8px;border-radius:99px;font:700 9px var(--mono)}
+.badge.auto{background:rgba(98,255,181,.12);color:var(--green)}.badge.manual{background:rgba(233,189,104,.14);color:var(--gold)}
+.rtp-chip{font:700 11px var(--mono);color:var(--green)}.rtp-chip.manual{color:var(--gold)}
+.row-actions{display:flex;flex-direction:column;gap:4px}.row-actions .btn{width:34px;height:30px;padding:0}
+.sheet{border-radius:18px;border:1px solid rgba(233,189,104,.22);background:linear-gradient(160deg,rgba(233,189,104,.07),rgba(0,0,0,.35));padding:14px;display:flex;flex-direction:column;gap:12px}
+.sheet h3{font:800 12px var(--mono);color:var(--gold);letter-spacing:.7px;display:flex;align-items:center;gap:8px}
+.sheet-grid{display:grid;gap:10px}.sheet-actions{display:flex;flex-wrap:wrap;gap:8px}
+.mode-toggle{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.mode-opt{padding:10px;border-radius:11px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.3);cursor:pointer;text-align:center;font:700 11px var(--mono);color:var(--muted)}
+.mode-opt.active-auto{border-color:rgba(98,255,181,.45);background:rgba(98,255,181,.1);color:var(--green)}
+.mode-opt.active-manual{border-color:rgba(233,189,104,.45);background:rgba(233,189,104,.1);color:var(--gold)}
+.mode-opt small{display:block;font:10px system-ui;font-weight:400;opacity:.75;margin-top:3px}
+.settings-card{border-radius:16px;border:1px solid rgba(98,255,181,.14);background:rgba(0,0,0,.28);padding:14px;display:flex;flex-direction:column;gap:12px}
+.settings-card h3{font:700 12px var(--mono);color:var(--green);letter-spacing:.6px}
+.backup-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;border-radius:10px;border:1px solid rgba(98,255,181,.12);background:rgba(0,0,0,.25);font:11px var(--mono)}
+.backup-item span{color:var(--muted);font-size:10px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);z-index:5000;padding:12px 18px;border-radius:12px;font:700 12px var(--mono);background:rgba(8,20,18,.96);border:1px solid rgba(98,255,181,.35);color:var(--green);box-shadow:0 12px 40px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:all .25s;max-width:min(90vw,360px);text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}.toast.err{border-color:rgba(255,84,112,.4);color:#ff8a9c}
+.empty{text-align:center;padding:28px 12px;color:var(--muted);font:12px var(--mono);border:1px dashed rgba(98,255,181,.15);border-radius:14px}
+.spin{animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.rev-line{font:9px var(--mono);color:#5f777a;text-align:center}
+@media(max-width:380px){.card .thumb{height:130px}.game-row{grid-template-columns:48px 1fr auto}.game-row .thumb{width:48px;height:48px}}
+</style>
+</head>
+<body>
+<main class="phone">
+  <section class="page active" id="pageRtp">
+    <div class="hud"><span class="live">online</span><span>7scrown//RTP</span></div>
+    <div class="toolbar">
+      <div class="label">RTP Ki Ki SLOT</div>
+      <div class="toolbar-right">
+        <button class="btn btn-play" id="playBtn" type="button"><i class="fas fa-play"></i> PLAY</button>
+        <button class="btn btn-admin" id="adminOpenBtn" type="button"><span class="ico" aria-hidden="true"><svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M256 0c4.6 0 9.2 1 13.4 2.9L457.7 82.8c22 9.3 38.4 31 38.3 57.2c-.5 99.2-41.3 280.7-213.6 363.2c-16.7 8-36.1 8-52.8 0C57.3 420.7 16.5 239.2 16 140c-.1-26.2 16.3-47.9 38.3-57.2L242.7 2.9C246.8 1 251.4 0 256 0zm0 66.8V444.8C394 378 431.1 230.1 432 141.4L256 66.8l0 0z"/></svg></span> Live </button>
+      </div>
+    </div>
+    <div class="demo-warning" id="demoWarning">Loading…</div>
+    <div class="feed-status" id="feedStatus">ဒေတာ ဖတ်နေသည်…</div>
+    <div class="grid" id="gameGrid"></div>
+    <div class="foot">Ki Ki · Hardened Admin</div>
+  </section>
+
+  <section class="page" id="pageAdmin">
+    <div class="hud"><span>ADMIN PANEL</span><span>7scrown//CTRL</span></div>
+    <div class="admin-shell">
+      <div class="admin-header">
+        <button class="btn btn-ghost btn-sm" id="adminBackBtn" type="button"><i class="fas fa-arrow-left"></i> RTP</button>
+        <div class="admin-title">CONTROL CENTER</div>
+        <span class="dirty-pill" id="dirtyPill"><i class="fas fa-circle" style="font-size:7px"></i> UNSAVED</span>
+        <button class="btn btn-danger btn-sm" id="logoutBtn" type="button" hidden><i class="fas fa-right-from-bracket"></i></button>
+      </div>
+
+      <div class="login-card" id="loginCard">
+        <div class="icon"><span class="ico" style="width:22px;height:22px" aria-hidden="true"><svg viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><path d="M144 144v48h160V144c0-44.2-35.8-80-80-80s-80 35.8-80 80zM80 192V144C80 64.5 144.5 0 224 0s144 64.5 144 144v48h16c35.3 0 64 28.7 64 64V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V256c0-35.3 28.7-64 64-64H80z"/></svg></span></div>
+        <h2>Admin Login</h2>
+        <p>Password ထည့်ပါ။ Default: <b style="color:var(--gold)">admin123</b><br>Login ၈ ကြိမ်ကျော်ရင် ၅ မိနစ် lock</p>
+        <div class="field" style="max-width:300px">
+          <label>Password</label>
+          <input id="adminPass" type="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button class="btn btn-primary" id="loginBtn" type="button" style="width:100%;max-width:300px;min-height:46px">
+          <i class="fas fa-right-to-bracket"></i> ဝင်မည်
+        </button>
+        <div class="feed-status" id="loginMsg" style="min-height:18px"></div>
+      </div>
+
+      <div id="dash" hidden>
+        <div class="admin-tabs">
+          <button class="admin-tab active" data-tab="games" type="button">ဂိမ်းများ</button>
+          <button class="admin-tab" data-tab="settings" type="button">Settings</button>
+          <button class="admin-tab" data-tab="security" type="button">Security</button>
+          <button class="admin-tab" data-tab="backup" type="button">Backup</button>
+        </div>
+
+        <div class="admin-panel active" id="tab-games">
+          <div class="list-toolbar">
+            <button class="btn btn-primary btn-sm" id="addGameBtn" type="button"><i class="fas fa-plus"></i> အသစ်</button>
+            <button class="btn btn-soft btn-sm" id="saveGamesBtn" type="button"><i class="fas fa-cloud-arrow-up"></i> Server သိမ်း</button>
+            <button class="btn btn-ghost btn-sm" id="reloadBtn" type="button" title="Server မှ ပြန်ဖတ်"><i class="fas fa-rotate"></i></button>
+            <span class="list-meta" id="listMeta">—</span>
+          </div>
+          <input class="search-box" id="searchBox" type="search" placeholder="ရှာမည် — ဂိမ်းအမည်…">
+          <div class="sheet" id="gameSheet" hidden>
+            <h3 id="sheetTitle"><i class="fas fa-gamepad"></i> ဂိမ်းအသစ်</h3>
+            <input type="hidden" id="editIdx" value="-1">
+            <div class="sheet-grid">
+              <div class="field" id="fNameField"><label>ဂိမ်းအမည် *</label><input id="fName" type="text" maxlength="80" placeholder="Sweet Bonanza 2500"></div>
+              <div class="field" id="fImgField"><label>ပုံ URL (https)</label><input id="fImg" type="url" maxlength="500" placeholder="https://…"></div>
+              <div class="field">
+                <label>RTP Mode</label>
+                <div class="mode-toggle">
+                  <div class="mode-opt active-auto" data-mode="auto" id="modeAuto">AUTO<small>အတက်အကျ</small></div>
+                  <div class="mode-opt" data-mode="manual" id="modeManual">MANUAL<small>သတ်မှတ် %</small></div>
+                </div>
+                <input type="hidden" id="fMode" value="auto">
+              </div>
+              <div class="field" id="fRtpField"><label>RTP % <span id="rtpHint">(Auto စတင်တန်ဖိုး)</span></label><input id="fRtp" type="number" min="0" max="100" step="0.01" placeholder="96.50"></div>
+            </div>
+            <div class="sheet-actions">
+              <button class="btn btn-primary" id="sheetSave" type="button"><i class="fas fa-check"></i> အတည်ပြု</button>
+              <button class="btn btn-ghost" id="sheetCancel" type="button">ပယ်ဖျက်</button>
+            </div>
+          </div>
+          <div class="game-list" id="gameList"></div>
+          <div class="rev-line" id="revLine">—</div>
+        </div>
+
+        <div class="admin-panel" id="tab-settings">
+          <div class="settings-card">
+            <h3><i class="fas fa-link"></i> Play URL & Disclaimer</h3>
+            <div class="field"><label>Slot ဂိမ်း Link (https)</label><input id="setPlayUrl" type="url" maxlength="500" placeholder="https://…"></div>
+            <div class="field"><label>Disclaimer</label><textarea id="setDisclaimer" rows="4" maxlength="2000"></textarea></div>
+            <button class="btn btn-primary" id="saveSettingsBtn" type="button"><i class="fas fa-save"></i> Settings သိမ်း</button>
+          </div>
+        </div>
+
+        <div class="admin-panel" id="tab-security">
+          <div class="settings-card">
+            <h3><i class="fas fa-key"></i> Password ပြောင်းမည်</h3>
+            <p class="field-hint">အနည်းဆုံး ၆ လုံး · အားနည်းသော password မသုံးရ</p>
+            <div class="field"><label>လက်ရှိ Password</label><input id="curPass" type="password" autocomplete="current-password"></div>
+            <div class="field"><label>Password အသစ်</label><input id="newPass" type="password" autocomplete="new-password"></div>
+            <div class="field"><label>Password အသစ် (ထပ်ရိုက်)</label><input id="newPass2" type="password" autocomplete="new-password"></div>
+            <button class="btn btn-primary" id="changePassBtn" type="button"><span class="ico" aria-hidden="true"><svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M256 0c4.6 0 9.2 1 13.4 2.9L457.7 82.8c22 9.3 38.4 31 38.3 57.2c-.5 99.2-41.3 280.7-213.6 363.2c-16.7 8-36.1 8-52.8 0C57.3 420.7 16.5 239.2 16 140c-.1-26.2 16.3-47.9 38.3-57.2L242.7 2.9C246.8 1 251.4 0 256 0zm0 66.8V444.8C394 378 431.1 230.1 432 141.4L256 66.8l0 0z"/></svg></span> ပြောင်းမည်</button>
+          </div>
+        </div>
+
+        <div class="admin-panel" id="tab-backup">
+          <div class="settings-card">
+            <h3><i class="fas fa-clock-rotate-left"></i> Auto Backups</h3>
+            <p class="field-hint">Server သိမ်းတိုင်း backup ယူသည်။ Restore လုပ်ရင် password မပြောင်းပါ။</p>
+            <button class="btn btn-soft btn-sm" id="refreshBackupsBtn" type="button"><i class="fas fa-rotate"></i> စာရင်း ပြန်ဖတ်</button>
+            <div id="backupList" class="game-list" style="max-height:40vh"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="play-screen" id="playScreen" aria-hidden="true">
+  <div class="play-bar"><button class="btn btn-soft" id="backBtn" type="button"><i class="fas fa-chevron-left"></i> ပြန်မည်</button></div>
+  <iframe id="playFrame" title="Play Slot" referrerpolicy="no-referrer"></iframe>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(()=>{
+const DEMO={'sweet bonanza 2500':{min:48,max:97,start:74,step:5.4},'gates of olympus':{min:57,max:99,start:88,step:2.7},'starlight princess':{min:39,max:95,start:63,step:7.2},'sugar rush':{min:51,max:98,start:82,step:3.8},'zeus vs hades — gods of war':{min:43,max:96,start:69,step:6.1},'pyramid bonanza':{min:31,max:92,start:57,step:5.3},'jelly express':{min:55,max:99,start:91,step:3.2},'circus joker 4096':{min:28,max:98,start:52,step:8.4},'fortune gems 2':{min:61,max:96,start:78,step:2.2},'fortune gems':{min:36,max:94,start:66,step:6.7}};
+const $=id=>document.getElementById(id);
+const norm=s=>String(s||'').trim().toLocaleLowerCase().replace(/\s+/g,' ');
+const okUrl=u=>{try{const x=new URL(u);return x.protocol==='http:'||x.protocol==='https:'}catch{return false}};
+const validRtp=v=>{if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(v);return Number.isFinite(n)&&n>=0&&n<=100?n:null};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone=a=>JSON.parse(JSON.stringify(a));
+
+let games=[],playUrl='',disclaimer='',revision=0,cards=[],isAdmin=false,csrf='';
+let draft=null,savedSnap='',searchQ='',busy=false;
+
+function toast(msg,err){const el=$('toast');el.textContent=msg;el.classList.toggle('err',!!err);el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2800)}
+function setBusy(btn,on){busy=!!on;if(btn){btn.disabled=!!on;if(on){btn._html=btn.innerHTML;btn.innerHTML='<i class="fas fa-spinner spin"></i>'}else if(btn._html)btn.innerHTML=btn._html}}
+
+async function api(path,opts={}){
+  const headers={'Content-Type':'application/json',...(opts.headers||{})};
+  if(csrf&&opts.method&&opts.method!=='GET')headers['X-CSRF-Token']=csrf;
+  const res=await fetch(path,{credentials:'same-origin',...opts,headers});
+  let data;try{data=await res.json()}catch{data={ok:false,message:'Invalid response'}}
+  if(data.csrf)csrf=data.csrf;
+  if(res.status===401&&data.code==='SESSION_EXPIRED'){isAdmin=false;showAdmin()}
+  return{status:res.status,data};
+}
+function setPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));$(id).classList.add('active')}
+function markDirty(){const dirty=draft&&JSON.stringify(draft)!==savedSnap;$('dirtyPill').classList.toggle('show',!!dirty);return dirty}
+
+async function loadPublic(){
+  try{
+    const{data}=await api('/api/games');
+    if(!data.ok)throw new Error(data.message||'fail');
+    games=Array.isArray(data.games)?data.games:[];
+    playUrl=data.playUrl||'';disclaimer=data.disclaimer||'';revision=data.revision||0;
+    $('demoWarning').textContent=disclaimer;rebuildGrid();
+    $('feedStatus').textContent=`ဂိမ်း ${games.length} ခု · rev ${revision}`;
+  }catch{$('feedStatus').textContent='Server ချိတ်ဆက်မရပါ'}
+}
+
+function rebuildGrid(){
+  const grid=$('gameGrid');grid.innerHTML='';cards=[];
+  games.forEach(g=>{
+    const card=document.createElement('article');card.className='card';
+    const manual=g.rtpMode==='manual';
+    let value;if(manual)value=validRtp(g.rtp)??0;else{const p=DEMO[norm(g.name)]||{min:35,max:97,start:64,step:4};const start=validRtp(g.rtp);value=(start!==null?start:p.start)+(Math.random()-.5)*3}
+    card.innerHTML=`<div class="title">${esc(g.name||'Unnamed')}</div><div class="thumb">${okUrl(g.img)?`<img src="${esc(g.img)}" alt="" loading="lazy">`:'<i class="fas fa-image ph"></i>'}</div><div class="rtp-label">${manual?'RTP MANUAL':'RTP AUTO'}</div><div class="rtp${manual?' manual':''}">${value.toFixed(2)}%</div><div class="meter${manual?' manual':''}"><span style="width:${Math.max(0,Math.min(100,value))}%"></span></div>`;
+    grid.appendChild(card);
+    const p=DEMO[norm(g.name)]||{min:35,max:97,start:64,step:4};
+    cards.push({game:g,rtpEl:card.querySelector('.rtp'),span:card.querySelector('.meter span'),label:card.querySelector('.rtp-label'),meter:card.querySelector('.meter'),sim:{min:p.min,max:p.max,step:p.step,value,nextAt:Date.now()+40000+Math.random()*50000}});
+  });
+}
+setInterval(()=>{
+  const now=Date.now();
+  cards.forEach(c=>{
+    if(c.game.rtpMode==='manual'){const v=validRtp(c.game.rtp)??0;c.rtpEl.textContent=v.toFixed(2)+'%';c.rtpEl.classList.add('manual');c.meter.classList.add('manual');c.span.style.width=Math.max(0,Math.min(100,v))+'%';c.label.textContent='RTP MANUAL';return}
+    c.rtpEl.classList.remove('manual');c.meter.classList.remove('manual');c.label.textContent='RTP AUTO';
+    if(now<c.sim.nextAt)return;
+    let delta=(Math.random()*c.sim.step+.2)*(Math.random()<.5?-1:1);let next=c.sim.value+delta;
+    if(next>c.sim.max)next=c.sim.min+Math.random()*3;if(next<c.sim.min)next=c.sim.max-Math.random()*3;
+    c.sim.value=next;c.sim.nextAt=now+45000+Math.random()*50000;c.rtpEl.textContent=next.toFixed(2)+'%';c.span.style.width=Math.max(0,Math.min(100,next))+'%';
+  });
+},1000);
+
+function openPlay(){$('playFrame').src=okUrl(playUrl)?playUrl:'about:blank';$('playScreen').classList.add('active');document.body.style.overflow='hidden'}
+function closePlay(){$('playScreen').classList.remove('active');$('playFrame').src='about:blank';document.body.style.overflow=''}
+$('playBtn').onclick=openPlay;$('backBtn').onclick=closePlay;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('playScreen').classList.contains('active'))closePlay()});
+
+$('adminOpenBtn').onclick=async()=>{setPage('pageAdmin');const{data}=await api('/api/admin/me');isAdmin=!!(data&&data.admin);if(data&&data.csrf)csrf=data.csrf;showAdmin()};
+$('adminBackBtn').onclick=()=>{if(markDirty()&&!confirm('မသိမ်းရသေးသော ပြောင်းလဲမှု ရှိသည်။ ထွက်မလား?'))return;setPage('pageRtp');loadPublic()};
+$('logoutBtn').onclick=async()=>{if(markDirty()&&!confirm('မသိမ်းရသေး။ Logout လုပ်မလား?'))return;await api('/api/admin/logout',{method:'POST',body:'{}'});isAdmin=false;csrf='';draft=null;showAdmin();toast('Logout ပြီး')};
+
+function showAdmin(){
+  $('loginCard').hidden=isAdmin;$('dash').hidden=!isAdmin;$('logoutBtn').hidden=!isAdmin;
+  if(isAdmin){draft=clone(games);savedSnap=JSON.stringify(draft);markDirty();renderList();$('setPlayUrl').value=playUrl;$('setDisclaimer').value=disclaimer;updateRevLine()}
+}
+function updateRevLine(){$('revLine').textContent=`revision ${revision}`}
+
+$('loginBtn').onclick=doLogin;$('adminPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+async function doLogin(){
+  if(busy)return;setBusy($('loginBtn'),true);$('loginMsg').textContent='စစ်ဆေးနေသည်…';
+  try{
+    const{data}=await api('/api/admin/login',{method:'POST',body:JSON.stringify({password:$('adminPass').value})});
+    if(data.ok){
+      isAdmin=true;csrf=data.csrf||csrf;$('adminPass').value='';$('loginMsg').textContent='';
+      const r=await api('/api/admin/data');
+      if(r.data.ok){games=r.data.games||[];playUrl=r.data.playUrl||'';disclaimer=r.data.disclaimer||'';revision=r.data.revision||0;if(r.data.csrf)csrf=r.data.csrf}
+      showAdmin();toast('Admin ဝင်ရောက်ပြီး');
+    }else{$('loginMsg').textContent=data.message||'မအောင်မြင်ပါ';toast(data.message||'Login မအောင်မြင်',true)}
+  }finally{setBusy($('loginBtn'),false)}
+}
+
+document.querySelectorAll('.admin-tab').forEach(tab=>{
+  tab.onclick=()=>{document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.admin-panel').forEach(p=>p.classList.remove('active'));tab.classList.add('active');$('tab-'+tab.dataset.tab).classList.add('active');if(tab.dataset.tab==='backup')loadBackups()}
+});
+$('searchBox').oninput=()=>{searchQ=$('searchBox').value.trim().toLowerCase();renderList()};
+
+function renderList(){
+  const list=$('gameList');
+  const filtered=(draft||[]).map((g,i)=>({g,i})).filter(({g})=>!searchQ||norm(g.name).includes(searchQ));
+  $('listMeta').textContent=`${draft?.length||0} ဂိမ်း`+(searchQ?` · ပြ ${filtered.length}`:'');
+  if(!draft?.length){list.innerHTML='<div class="empty">ဂိမ်းမရှိသေးပါ · 「အသစ်」 နှိပ်၍ ထည့်ပါ</div>';markDirty();return}
+  if(!filtered.length){list.innerHTML='<div class="empty">ရှာဖွေမှုနဲ့ ကိုက်ညီသော ဂိမ်းမရှိ</div>';markDirty();return}
+  list.innerHTML=filtered.map(({g,i})=>{
+    const manual=g.rtpMode==='manual';const rtp=manual?((validRtp(g.rtp)??'—')+'%'):'Auto';
+    return`<div class="game-row"><div class="thumb">${okUrl(g.img)?`<img src="${esc(g.img)}" alt="">`:'<i class="fas fa-image" style="color:#64748b"></i>'}</div><div class="info"><div class="name">${esc(g.name)}</div><div class="sub"><span class="badge ${manual?'manual':'auto'}">${manual?'MANUAL':'AUTO'}</span><span class="rtp-chip ${manual?'manual':''}">${rtp}</span></div></div><div class="row-actions"><button class="btn btn-soft btn-sm" data-act="edit" data-i="${i}"><i class="fas fa-pen"></i></button><button class="btn btn-danger btn-sm" data-act="del" data-i="${i}"><i class="fas fa-trash"></i></button><button class="btn btn-ghost btn-sm" data-act="up" data-i="${i}" ${i===0?'disabled':''}><i class="fas fa-chevron-up"></i></button><button class="btn btn-ghost btn-sm" data-act="down" data-i="${i}" ${i===draft.length-1?'disabled':''}><i class="fas fa-chevron-down"></i></button></div></div>`;
+  }).join('');
+  list.querySelectorAll('[data-act]').forEach(btn=>{
+    btn.onclick=()=>{
+      const i=+btn.dataset.i,act=btn.dataset.act;
+      if(act==='edit')openSheet(i);
+      else if(act==='del'){if(!confirm(`「${draft[i].name}」 ဖြုတ်မလား?`))return;draft.splice(i,1);renderList();toast('စာရင်းမှ ဖယ်ပြီး — Server သိမ်းရန် မမေ့ပါနှင့်')}
+      else if(act==='up'&&i>0){[draft[i-1],draft[i]]=[draft[i],draft[i-1]];renderList()}
+      else if(act==='down'&&i<draft.length-1){[draft[i+1],draft[i]]=[draft[i],draft[i+1]];renderList()}
+    };
+  });
+  markDirty();
+}
+
+function setMode(mode){$('fMode').value=mode;$('modeAuto').className='mode-opt'+(mode==='auto'?' active-auto':'');$('modeManual').className='mode-opt'+(mode==='manual'?' active-manual':'');$('rtpHint').textContent=mode==='manual'?'(တည်ငြိမ် %)':'(Auto စတင်တန်ဖိုး)'}
+$('modeAuto').onclick=()=>setMode('auto');$('modeManual').onclick=()=>setMode('manual');
+
+function openSheet(idx){
+  $('gameSheet').hidden=false;$('fNameField').classList.remove('invalid');$('fRtpField').classList.remove('invalid');
+  if(idx>=0){const g=draft[idx];$('sheetTitle').innerHTML='<i class="fas fa-pen"></i> ဂိမ်း ပြင်မည်';$('editIdx').value=String(idx);$('fName').value=g.name;$('fImg').value=g.img||'';$('fRtp').value=g.rtp||'';setMode(g.rtpMode==='manual'?'manual':'auto')}
+  else{$('sheetTitle').innerHTML='<i class="fas fa-plus"></i> ဂိမ်းအသစ်';$('editIdx').value='-1';$('fName').value='';$('fImg').value='';$('fRtp').value='96';setMode('manual')}
+  $('fName').focus();
+}
+$('addGameBtn').onclick=()=>openSheet(-1);$('sheetCancel').onclick=()=>{$('gameSheet').hidden=true};
+$('sheetSave').onclick=()=>{
+  const name=$('fName').value.trim(),mode=$('fMode').value==='manual'?'manual':'auto';let rtp=$('fRtp').value.trim();let ok=true;
+  if(!name){$('fNameField').classList.add('invalid');ok=false}else $('fNameField').classList.remove('invalid');
+  if(mode==='manual'&&validRtp(rtp)===null){$('fRtpField').classList.add('invalid');ok=false}else $('fRtpField').classList.remove('invalid');
+  const img=$('fImg').value.trim();if(img&&!okUrl(img)){toast('ပုံ URL မမှန် (http/https)',true);ok=false}
+  if(!ok){toast('ဖောင် ပြည့်စုံအောင် ဖြည့်ပါ',true);return}
+  if(mode==='manual')rtp=String(validRtp(rtp));
+  const g={name,img,rtp,rtpMode:mode};const idx=+$('editIdx').value;
+  if(draft.some((x,i)=>i!==idx&&x.name.toLowerCase()===name.toLowerCase())){toast('ဤအမည် ရှိပြီးသား',true);return}
+  if(idx>=0)draft[idx]=g;else draft.push(g);$('gameSheet').hidden=true;renderList();toast(idx>=0?'ပြင်ပြီး (local)':'ထည့်ပြီး (local)');
+};
+
+$('saveGamesBtn').onclick=async()=>{
+  if(busy||!draft)return;setBusy($('saveGamesBtn'),true);
+  try{
+    const{data}=await api('/api/admin/games',{method:'PUT',body:JSON.stringify({games:draft,playUrl,disclaimer,revision})});
+    if(data.ok){games=data.games||draft;draft=clone(games);savedSnap=JSON.stringify(draft);revision=data.revision||revision;markDirty();renderList();updateRevLine();toast(data.message||'သိမ်းပြီး')}
+    else if(data.code==='CONFLICT'){toast(data.message||'Conflict',true);if(confirm('Server ဗားရှင်း ပြန်ဖတ်မလား?'))await reloadAdmin()}
+    else toast(data.message||'မအောင်မြင်',true);
+  }finally{setBusy($('saveGamesBtn'),false)}
+};
+
+async function reloadAdmin(){
+  const r=await api('/api/admin/data');if(!r.data.ok){toast(r.data.message||'ဖတ်မရ',true);return}
+  games=r.data.games||[];playUrl=r.data.playUrl||'';disclaimer=r.data.disclaimer||'';revision=r.data.revision||0;
+  if(r.data.csrf)csrf=r.data.csrf;draft=clone(games);savedSnap=JSON.stringify(draft);
+  $('setPlayUrl').value=playUrl;$('setDisclaimer').value=disclaimer;renderList();updateRevLine();markDirty();toast('Server မှ ပြန်ဖတ်ပြီး');
+}
+$('reloadBtn').onclick=()=>{if(markDirty()&&!confirm('မသိမ်းရသေး။ Server မှ ပြန်ဖတ်မလား?'))return;reloadAdmin()};
+
+$('saveSettingsBtn').onclick=async()=>{
+  if(busy)return;const body={playUrl:$('setPlayUrl').value.trim(),disclaimer:$('setDisclaimer').value,revision};
+  if(body.playUrl&&!okUrl(body.playUrl)){toast('Play URL မမှန်',true);return}
+  setBusy($('saveSettingsBtn'),true);
+  try{const{data}=await api('/api/admin/settings',{method:'POST',body:JSON.stringify(body)});
+    if(data.ok){playUrl=data.playUrl||body.playUrl;disclaimer=data.disclaimer||body.disclaimer;revision=data.revision||revision;$('demoWarning').textContent=disclaimer;updateRevLine();toast(data.message||'Settings သိမ်းပြီး')}
+    else toast(data.message||'မအောင်မြင်',true);
+  }finally{setBusy($('saveSettingsBtn'),false)}
+};
+
+$('changePassBtn').onclick=async()=>{
+  if(busy)return;const current=$('curPass').value,newPassword=$('newPass').value,c2=$('newPass2').value;
+  if(newPassword!==c2){toast('Password အသစ် မတူပါ',true);return}if(newPassword.length<6){toast('အနည်းဆုံး ၆ လုံး',true);return}
+  setBusy($('changePassBtn'),true);
+  try{const{data}=await api('/api/admin/password',{method:'POST',body:JSON.stringify({current,newPassword})});
+    if(data.ok){$('curPass').value=$('newPass').value=$('newPass2').value='';toast(data.message||'Password ပြောင်းပြီး')}
+    else toast(data.message||'မအောင်မြင်',true);
+  }finally{setBusy($('changePassBtn'),false)}
+};
+
+async function loadBackups(){
+  const{data}=await api('/api/admin/backups');const box=$('backupList');
+  if(!data.ok||!data.backups?.length){box.innerHTML='<div class="empty">Backup မရှိသေးပါ</div>';return}
+  box.innerHTML=data.backups.map(b=>`<div class="backup-item"><div><div>${esc(b.name)}</div><span>${esc(b.mtime||'')} · ${Math.round((b.size||0)/1024)} KB</span></div><button class="btn btn-soft btn-sm" data-bak="${esc(b.name)}">Restore</button></div>`).join('');
+  box.querySelectorAll('[data-bak]').forEach(btn=>{
+    btn.onclick=async()=>{
+      if(!confirm(`${btn.dataset.bak} ကို restore မလား?`))return;setBusy(btn,true);
+      try{const{data:d}=await api('/api/admin/restore',{method:'POST',body:JSON.stringify({name:btn.dataset.bak})});
+        if(d.ok){games=d.games||[];playUrl=d.playUrl||playUrl;disclaimer=d.disclaimer||disclaimer;revision=d.revision||revision;draft=clone(games);savedSnap=JSON.stringify(draft);renderList();updateRevLine();toast(d.message||'Restore ပြီး');loadBackups()}
+        else toast(d.message||'မအောင်မြင်',true);
+      }finally{setBusy(btn,false)}
+    };
+  });
+}
+$('refreshBackupsBtn').onclick=loadBackups;
+window.addEventListener('beforeunload',e=>{if(markDirty()){e.preventDefault();e.returnValue=''}});
+loadPublic();setInterval(loadPublic,120000);
+})();
+</script>
+</body>
+</html>
