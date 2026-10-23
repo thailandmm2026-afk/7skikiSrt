@@ -1,0 +1,69 @@
+{
+  "playUrl": "http://mgkikitk1.7scrown48.xyz/?referralCode=qhk8992",
+  "disclaimer": "ဖော်ပြနေသော RTP ရာခိုင်နှုန်း အတက်အကျသည် စမ်းသပ်ပြသမှုသာဖြစ်ပြီး တကယ့်ဂိမ်းဒေတာ သို့မဟုတ် ရလဒ်များမှ တိုင်းတာထားခြင်း မဟုတ်ပါ။ ထိန်းထိန်းသိမ်းသိမ်း ကစားပါ။",
+  "adminPasswordHash": "scrypt:32768:8:1$wq13QEAarcx6VEO9$0bb2402c49c86ab4257deebadfb838f928b1b954a1eef621e89e05d8cc4bd69b17130c7f3ab14fe7e43f9c20b2a512f5169278f16086b0d17434da72ab277384",
+  "revision": 2,
+  "updatedAt": "2026-10-23T13:17:42.592803+00:00",
+  "games": [
+    {
+      "name": "Sweet Bonanza 2500",
+      "img": "https://i.ibb.co/ZRRWSWmK/vs20swbon2500.png",
+      "rtp": "74",
+      "rtpMode": "auto"
+    },
+    {
+      "name": "Gates of Olympus",
+      "img": "https://i.ibb.co/4RJNvtG6/vs20olympgold.png",
+      "rtp": "88",
+      "rtpMode": "auto"
+    },
+    {
+      "name": "Starlight Princess",
+      "img": "https://i.ibb.co/KpVNMb99/vs20starprss.png",
+      "rtp": "63",
+      "rtpMode": "auto"
+    },
+    {
+      "name": "Sugar Rush",
+      "img": "https://i.ibb.co/21P48wGd/vs20sugrushss.png",
+      "rtp": "82",
+      "rtpMode": "auto"
+    },
+    {
+      "name": "Zeus vs Hades — Gods of War",
+      "img": "https://i.ibb.co/xqHttb47/vs15godsofwar.png",
+      "rtp": "69",
+      "rtpMode": "auto"
+    },
+    {
+      "name": "Pyramid Bonanza",
+      "img": "https://i.ibb.co/wZJd3gyf/vs20pbonanza.png",
+      "rtp": "57",
+      "rtpMode": "auto"
+    },
+    {
+      "name": "Jelly Express",
+      "img": "https://i.ibb.co/S7Mh5C53/vs20payanyvol.png",
+      "rtp": "91",
+      "rtpMode": "auto"
+    },
+    {
+      "name": "Circus Joker 4096",
+      "img": "https://i.ibb.co/sv9kKPkQ/518.png",
+      "rtp": "52",
+      "rtpMode": "auto"
+    },
+    {
+      "name": "Fortune Gems 2",
+      "img": "https://i.ibb.co/LztKHSxr/223.png",
+      "rtp": "78",
+      "rtpMode": "auto"
+    },
+    {
+      "name": "Fortune Gems",
+      "img": "https://i.ibb.co/zWbD10br/109.png",
+      "rtp": "66",
+      "rtpMode": "auto"
+    }
+  ]
+}
